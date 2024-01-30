@@ -43,6 +43,11 @@ The preprocessed data for LLM training can be found here https://huggingface.co/
 ## 3.1 Environment
 Here I use Python version 3.9.2. All the dependencies are listed in requirements.txt.
 
+## 3.2 Run the code
+An example to run the training code is
+```
+python3 src/models/train_model.py --model_name 'UFNLP/gatortron-base' --data_dir 'ibm/MedMentions-ZS' --batch_size 24 --num_train_epochs 10 --weight_decay 0.01 --new_model_dir "/home/ec2-user/SageMaker/LLM-NER-clinical-text/models/medmentions/gatortrons/" --path_umls_semtype '/home/ec2-user/SageMaker/LLM-NER-clinical-text/data/public/MedMentions/SemGroups_2018.txt'
+```
 
 Project Organization
 ------------

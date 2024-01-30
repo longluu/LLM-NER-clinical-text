@@ -8,16 +8,15 @@ from datasets import ClassLabel
 
 
 class DatasetLoader():
-    def __init__(self, dataset_name: str, source: str, model_name: str):        
+    def __init__(self, dataset_name: str, model_name: str, path_umls_semtype: str):
         self.dataset_name = dataset_name
-        self.source = source
         self.model_name = model_name
+        self.path_umls_semtype = path_umls_semtype
     
     def load_dataset(self):
         # Load the dataset
         print('Loading and preprocessing the dataset ...')
-        if self.source == 'huggingface':
-            dataset = load_dataset(self.dataset_name)
+        dataset = load_dataset(self.dataset_name)
         
         # Load the model tokenizer
         global tokenizer 
@@ -39,7 +38,7 @@ class DatasetLoader():
         dataset = dataset.map(self.encode_and_align_labels, batched=True)
         
         # Load the UMLS concept types and make it match the label code
-        umls_semtype = self.load_umls_semtype('../data/public/MedMentions/SemGroups_2018.txt')
+        umls_semtype = self.load_umls_semtype(self.path_umls_semtype)
         umls_label_code = {}
         for code in umls_semtype.keys():
             umls_label_code['B-'+code] = umls_semtype[code]
