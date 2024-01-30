@@ -32,7 +32,17 @@ The model has 345 million params. Details can be found here https://www.nature.c
 ## 2.1. MedMentions
 This dataset contain 4,392 abstracts released in PubMed®1 between January 2016 and January 2017. The abstracts were manually annotated for biomedical concepts. Details are provided in https://arxiv.org/pdf/1902.09476v1.pdf and data is in https://github.com/chanzuckerberg/MedMentions. 
 
-A useful repo to preprocess the raw data for LLM training is https://github.com/mhmdrdwn/medm/tree/main.
+The preprocessed data for LLM training can be found here https://huggingface.co/datasets/ibm/MedMentions-ZS.
+
+## 2.2 NCBI-disease
+This dataset contains the disease name and concept annotations of the NCBI disease corpus, a collection of 793 PubMed abstracts fully annotated at the mention and concept level to serve as a research resource for the biomedical natural language processing community. Details are here https://www.sciencedirect.com/science/article/pii/S1532046413001974?via%3Dihub.
+
+The preprocessed data for LLM training can be found here https://huggingface.co/datasets/ncbi_disease.
+
+# 3. Training setup
+## 3.1 Environment
+Here I use Python version 3.9.2. All the dependencies are listed in requirements.txt.
+
 
 Project Organization
 ------------

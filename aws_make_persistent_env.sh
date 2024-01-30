@@ -23,10 +23,10 @@ rm -rf "$WORKING_DIR/miniconda.sh"
 # Create a custom conda environment
 source "$WORKING_DIR/miniconda/bin/activate"
 KERNEL_NAME="Tutorial-LLM"
-PYTHON="3.10.2"
+PYTHON="3.9.2"
 conda create --yes --name "$KERNEL_NAME" python="$PYTHON"
 conda activate "$KERNEL_NAME"
 pip install --quiet ipykernel
 # Customize these lines as necessary to install the required packages
-pip install -r /home/ec2-user/SageMaker/oreilly-transformers-video-series/requirements.txt
+#pip install -r /home/ec2-user/SageMaker/oreilly-transformers-video-series/requirements.txt
 EOF
