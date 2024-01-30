@@ -1,7 +1,4 @@
 from itertools import islice
-import pandas as pd
-import matplotlib.pyplot as plt
-import csv 
 from datasets import load_dataset
 from transformers import AutoTokenizer
 from datasets import ClassLabel

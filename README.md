@@ -42,6 +42,7 @@ The preprocessed data for LLM training can be found here https://huggingface.co/
 # 3. Training setup
 ## 3.1 Environment
 Here I use Python version 3.9.2. All the dependencies are listed in requirements.txt.
+You also need to install the repo as a package `pip install -e .`.
 
 ## 3.2 Run the code
 An example to run the training code is
