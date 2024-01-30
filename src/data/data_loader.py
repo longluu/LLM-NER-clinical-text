@@ -15,6 +15,7 @@ class DatasetLoader():
     
     def load_dataset(self):
         # Load the dataset
+        print('Loading and preprocessing the dataset ...')
         if self.source == 'huggingface':
             dataset = load_dataset(self.dataset_name)
         
