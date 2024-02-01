@@ -28,5 +28,6 @@ conda create --yes --name "$KERNEL_NAME" python="$PYTHON"
 conda activate "$KERNEL_NAME"
 pip install --quiet ipykernel
 # Customize these lines as necessary to install the required packages
-#pip install -r /home/ec2-user/SageMaker/oreilly-transformers-video-series/requirements.txt
+pip install -r /home/ec2-user/SageMaker/LLM-NER-clinical-text/requirements.txt
+pip install -e /home/ec2-user/SageMaker/LLM-NER-clinical-text/
 EOF

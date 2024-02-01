@@ -1,7 +1,7 @@
 from src.data.data_loader import *
 from src.models.model import *
 from transformers import DataCollatorForTokenClassification, TrainingArguments, Trainer
-from datasets import load_metric
+from seqeval.metrics import f1_score
 import argparse
 import numpy as np
 
@@ -21,22 +21,19 @@ class ModelTrainer():
         # Load and preprocess the data
         dataset_loader = DatasetLoader(dataset_name=self.dataset_name, model_name=self.model_name, \
                                        path_umls_semtype=self.path_umls_semtype)
+        global classmap
         dataset, classmap, umls_label_code, _ = dataset_loader.load_dataset()
 
         # Remove columns not used in training
-        if self.dataset_name == 'ibm/MedMentions-ZS':
-            dataset = dataset.remove_columns(['tokens', 'ner_tags', 'token_labels'])
+        if 'MedMentions' in self.dataset_name:
+            dataset = dataset.remove_columns(['Full Text', 'Entity Codes', 'tokens', 'ner_tags', 'token_labels'])
             
         # Create an NER model from a base pretrained model
         model_loader = ModelLoader(self.model_name)
         NER_model, tokenizer, config = model_loader.load_model(num_labels = len(classmap.names))
         
         # Create a collator
-        data_collator = DataCollatorForTokenClassification(tokenizer)
-        
-        # Define validation metrics
-        global metric
-        metric = load_metric("f1")
+        data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
         
         # Specify training args
         logging_steps = len(dataset["train"]) // self.batch_size
@@ -67,13 +64,30 @@ class ModelTrainer():
         # Train the model
         trainer.train()
 
-
-    def compute_metrics(self, eval_pred):  # custom method to take in logits and calculate accuracy of the eval set
-        logits, labels = eval_pred
-        predictions = np.argmax(logits, axis=-1)
-        return metric.compute(predictions=predictions, references=labels)
-
+    def compute_metrics(self, eval_pred):
+        y_pred, y_true = self.align_predictions(eval_pred.predictions, 
+                                           eval_pred.label_ids)
+        return {"f1": f1_score(y_true, y_pred)}
     
+    def align_predictions(self, predictions, label_ids):
+        preds = np.argmax(predictions, axis=2)
+        batch_size, seq_len = preds.shape
+        labels_list, preds_list = [], []
+
+        for batch_idx in range(batch_size):
+            example_labels, example_preds = [], []
+            for seq_idx in range(seq_len):
+                # Ignore label IDs = -100
+                if label_ids[batch_idx, seq_idx] != -100:
+                    example_labels.append(classmap.int2str(int(label_ids[batch_idx][seq_idx])))
+                    example_preds.append(classmap.int2str(int(preds[batch_idx][seq_idx])))
+
+            labels_list.append(example_labels)
+            preds_list.append(example_preds)
+
+        return preds_list, labels_list
+
+
 def main():
     # Parse the arguments
     parser = argparse.ArgumentParser()

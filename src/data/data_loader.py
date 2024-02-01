@@ -11,16 +11,27 @@ class DatasetLoader():
         self.path_umls_semtype = path_umls_semtype
     
     def load_dataset(self):
-        # Load the dataset
-        print('Loading and preprocessing the dataset ...')
-        dataset = load_dataset(self.dataset_name)
-        
         # Load the model tokenizer
         global tokenizer 
         tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-
-        # Create a list of unique label code
-        if self.dataset_name == 'ibm/MedMentions-ZS':
+        
+        # Load the dataset
+        print('Loading and preprocessing the dataset ...')
+        print(self.dataset_name)
+        if 'MedMentions' in self.dataset_name:
+            # Load the data
+            dataset = load_dataset("csv", data_files={
+                "train": self.dataset_name + 'train.csv',
+                "validation": self.dataset_name + 'val.csv',
+                "test": self.dataset_name + 'test.csv'})
+            
+            # Remove unused column
+            dataset = dataset.remove_columns('UMLS Code')
+            
+            # Transform the dataset to a BIO format for LLM
+            dataset = dataset.map(self.split_and_convert_to_BIO, batched=True)
+            
+            # Create a list of unique label code
             st21pv_types = ['T005', 'T007', 'T017', 'T022', 'T031', 'T033', 'T037', 
                             'T038', 'T058', 'T062', 'T074', 'T082', 'T091', 'T092', 
                             'T097', 'T098', 'T103', 'T168', 'T170', 'T201', 'T204']
@@ -43,9 +54,42 @@ class DatasetLoader():
         umls_label_code['O'] = None
 
         return dataset, classmap, umls_label_code, tokenizer
+
+    def split_and_convert_to_BIO(self, example):
+        input_processed = {}
+
+        # First convert the Full Text to list of tokens
+        tokens = []
+        for text in example['Full Text']:
+            # Convert string of words to list of words
+            text = text.replace("'", "").strip('][').split(', ')
+
+            # Remove all <START> and <END>
+            text = [item for item in text if (item != '<START>') and (item != '<END>')]
+
+            tokens.append(text)
+
+        # Convert Entity Codes to ner_tags
+        ner_tags = []
+        for text in example['Entity Codes']:
+            # Convert the labels to BIO format
+            text = text.replace('U-', 'B-').replace('L-', 'I-')
+
+            # Convert string of words to list of words
+            text = text.replace("'", "").strip('][').split(', ')
+
+            # Remove all <START> and <END>
+            text = [item for item in text if (item != '<START>') and (item != '<END>')]
+            
+            ner_tags.append(text)
+
+        input_processed["tokens"] = tokens
+        input_processed["ner_tags"] = ner_tags
+
+        return input_processed
     
     def encode_and_align_labels(self, example):
-        tokenized_inputs = tokenizer(example["tokens"], truncation=True, is_split_into_words=True)
+        tokenized_inputs = tokenizer(example["tokens"], max_length=512, truncation=True, is_split_into_words=True)
 
         labels = []
         for i, label in enumerate(example[f"token_labels"]):

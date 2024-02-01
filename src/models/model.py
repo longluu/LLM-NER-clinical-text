@@ -16,7 +16,7 @@ class ModelLoader():
         tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         config = AutoConfig.from_pretrained(self.model_name)
         config.num_labels = num_labels
-        NER_model = AutoModelForTokenClassification.from_pretrained(self.model_name, num_labels=num_labels).to(device)
+        NER_model = AutoModelForTokenClassification.from_pretrained(self.model_name, num_labels=num_labels)
         print('The model has ' + str(NER_model.num_parameters()/1e6) + 'millions parameters.')
         
         return NER_model, tokenizer, config

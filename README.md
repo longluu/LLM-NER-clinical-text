@@ -32,7 +32,7 @@ The model has 345 million params. Details can be found here https://www.nature.c
 ## 2.1. MedMentions
 This dataset contain 4,392 abstracts released in PubMed®1 between January 2016 and January 2017. The abstracts were manually annotated for biomedical concepts. Details are provided in https://arxiv.org/pdf/1902.09476v1.pdf and data is in https://github.com/chanzuckerberg/MedMentions. 
 
-The preprocessed data for LLM training can be found here https://huggingface.co/datasets/ibm/MedMentions-ZS.
+The preprocessed data for LLM training can be found here https://github.com/mhmdrdwn/medm/tree/main/data/built_data.
 
 ## 2.2 NCBI-disease
 This dataset contains the disease name and concept annotations of the NCBI disease corpus, a collection of 793 PubMed abstracts fully annotated at the mention and concept level to serve as a research resource for the biomedical natural language processing community. Details are here https://www.sciencedirect.com/science/article/pii/S1532046413001974?via%3Dihub.
@@ -47,7 +47,8 @@ You also need to install the repo as a package `pip install -e .`.
 ## 3.2 Run the code
 An example to run the training code is
 ```
-python3 src/models/train_model.py --model_name 'UFNLP/gatortron-base' --data_dir 'ibm/MedMentions-ZS' --batch_size 24 --num_train_epochs 10 --weight_decay 0.01 --new_model_dir "/home/ec2-user/SageMaker/LLM-NER-clinical-text/models/medmentions/gatortrons/" --path_umls_semtype '/home/ec2-user/SageMaker/LLM-NER-clinical-text/data/public/MedMentions/SemGroups_2018.txt'
+python3 src/models/train_model.py --model_name 'UFNLP/gatortrons' --data_dir '/home/ec2-user/SageMaker/LLM-NER-clinical-text/data/public/MedMentions/preprocessed-data/' --batch_size 4 --num_train_epochs 5 --weight_decay 0.01 --new_model_dir "/home/ec2-user/SageMaker/LLM-NER-clinical-text/models/medmentions/gatortrons/" --path_umls_semtype '/home/ec2-user/SageMaker/LLM-NER-clinical-text/data/public/MedMentions/SemGroups_2018.txt'
+
 ```
 
 Project Organization
