@@ -63,6 +63,9 @@ class ModelTrainer():
 
         # Train the model
         trainer.train()
+        
+        # Save the model
+        trainer.save_model()
 
     def compute_metrics(self, eval_pred):
         y_pred, y_true = self.align_predictions(eval_pred.predictions, 
