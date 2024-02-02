@@ -1,8 +1,10 @@
 from transformers import AutoModelForTokenClassification, AutoConfig, AutoTokenizer, DataCollatorForTokenClassification
 import torch
-from datasets import load_metric
+import numpy as np
+import evaluate
 from src.data.data_loader import *
 from torch.nn.functional import cross_entropy
+from typing import List
 import logging
 logging.disable(logging.INFO) # disable INFO and DEBUG logging everywhere
     
@@ -25,13 +27,15 @@ class ModelLoader():
         
         return NER_model, tokenizer, config
     
-    def evaluate_model(self, model_name: str, dataset_name: str, path_umls_semtype: str):
+    def evaluate_model(self, dataset_name: str, path_umls_semtype: str, metric_names: List[str]):
         # Load the fine-tuned model
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        NER_model = AutoModelForTokenClassification.from_pretrained(model_name)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        global NER_model
+        NER_model = AutoModelForTokenClassification.from_pretrained(self.model_name).to(device)
 
         # Load the data
-        dataset_loader = DatasetLoader(dataset_name=dataset_name, path_umls_semtype=path_umls_semtype, model_name=model_name)
+        dataset_loader = DatasetLoader(dataset_name=dataset_name, path_umls_semtype=path_umls_semtype, model_name=self.model_name)
         data_medmentions, classmap, umls_label_code, tokenizer = dataset_loader.load_dataset()
         data_medmentions = data_medmentions.remove_columns(['Full Text', 'Entity Codes', 'tokens', 'ner_tags', 'token_labels'])
 
@@ -40,17 +44,34 @@ class ModelLoader():
         data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
         # Make predictions on test data
-        predicted_labels = data_medmentions['test'].map(forward_pass_with_label, batched=True, batch_size=6)        
+        prediction_results = data_medmentions['test'].map(self.forward_pass_with_label, batched=True, batch_size=1)        
+        
+        # Compute the metrics
+        clf_metrics = evaluate.combine(metric_names)
+        
+        for (prediction, label) in zip(prediction_results['predicted_label'], prediction_results['labels']):
+            # Convert to numpy array
+            label = np.array(label)
+            prediction = np.array(prediction)
+
+            # Remove the special tokens
+            ind_not_special = np.where(label != -100)[0]
+
+            # Add to batch for computing error
+            clf_metrics.add_batch(predictions=prediction[ind_not_special], references=label[ind_not_special])
+            
+        return clf_metrics.compute(average='macro')
+        
         
     def forward_pass_with_label(self, batch):
         # Convert dict of lists to list of dicts suitable for data collator
         features = [dict(zip(batch, t)) for t in zip(*batch.values())]
 
         # Pad inputs and labels and put all tensors on device
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         batch = data_collator(features)
-        input_ids = batch["input_ids"]
-        attention_mask = batch["attention_mask"]
-        labels = batch["labels"]
+        input_ids = batch["input_ids"].to(device)
+        attention_mask = batch["attention_mask"].to(device)
         with torch.no_grad():
             # Pass data through model  
             output = NER_model(input_ids, attention_mask)
