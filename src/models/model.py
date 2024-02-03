@@ -36,15 +36,20 @@ class ModelLoader():
 
         # Load the data
         dataset_loader = DatasetLoader(dataset_name=dataset_name, path_umls_semtype=path_umls_semtype, model_name=self.model_name)
-        data_medmentions, classmap, umls_label_code, tokenizer = dataset_loader.load_dataset()
-        data_medmentions = data_medmentions.remove_columns(['Full Text', 'Entity Codes', 'tokens', 'ner_tags', 'token_labels'])
+        dataset, classmap, umls_label_code, tokenizer = dataset_loader.load_dataset()
+        
+        if 'MedMentions' in dataset_name:
+            dataset = dataset.remove_columns(['Full Text', 'Entity Codes', 'tokens', 'ner_tags', 'token_labels'])
+        
+        elif 'ncbi_disease' in dataset_name:
+            dataset = dataset.remove_columns(['tokens', 'id', 'token_labels'])
 
         # Create a collator
         global data_collator
         data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)
 
         # Make predictions on test data
-        prediction_results = data_medmentions['test'].map(self.forward_pass_with_label, batched=True, batch_size=1)        
+        prediction_results = dataset['test'].map(self.forward_pass_with_label, batched=True, batch_size=1)        
         
         # Compute the metrics
         clf_metrics = evaluate.combine(metric_names)

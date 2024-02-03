@@ -28,6 +28,9 @@ class ModelTrainer():
         if 'MedMentions' in self.dataset_name:
             dataset = dataset.remove_columns(['Full Text', 'Entity Codes', 'tokens', 'ner_tags', 'token_labels'])
             
+        elif 'ncbi_disease' in  self.dataset_name:
+            dataset = dataset.remove_columns(['tokens', 'id', 'token_labels'])
+            
         # Create an NER model from a base pretrained model
         model_loader = ModelLoader(self.model_name)
         NER_model, tokenizer, config = model_loader.load_model(num_labels = len(classmap.names))

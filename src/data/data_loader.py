@@ -38,20 +38,31 @@ class DatasetLoader():
             unique_label_code = sum([['B-' + code, 'I-' + code] for code in st21pv_types], [])
             unique_label_code.append('O')
 
-        # Encode the text labels in the dataset
-        classmap = ClassLabel(num_classes=len(unique_label_code), names=unique_label_code)
-        dataset = dataset.map(lambda y: {"token_labels": classmap.str2int(y["ner_tags"])})
-
+            # Encode the text labels in the dataset
+            classmap = ClassLabel(num_classes=len(unique_label_code), names=unique_label_code)
+            dataset = dataset.map(lambda y: {"token_labels": classmap.str2int(y["ner_tags"])})
+            
+            # Load the UMLS concept types and make it match the label code
+            umls_semtype = self.load_umls_semtype(self.path_umls_semtype)
+            umls_label_code = {}
+            for code in umls_semtype.keys():
+                umls_label_code['B-'+code] = umls_semtype[code]
+                umls_label_code['I-'+code] = umls_semtype[code]
+            umls_label_code['O'] = None
+            
+        elif 'ncbi_disease' in  self.dataset_name:
+            # Load the data
+            dataset = load_dataset(self.dataset_name)
+            
+            # Rename the label column
+            dataset = dataset.rename_column("ner_tags", "token_labels")
+            
+            # Set the mapping of labels
+            classmap = ClassLabel(num_classes=3, names=['none', 'disease', 'disease_continued'])
+            umls_label_code = None
+        
         # Re-tokenize with the model's tokenizer and align the labels
         dataset = dataset.map(self.encode_and_align_labels, batched=True)
-        
-        # Load the UMLS concept types and make it match the label code
-        umls_semtype = self.load_umls_semtype(self.path_umls_semtype)
-        umls_label_code = {}
-        for code in umls_semtype.keys():
-            umls_label_code['B-'+code] = umls_semtype[code]
-            umls_label_code['I-'+code] = umls_semtype[code]
-        umls_label_code['O'] = None
 
         return dataset, classmap, umls_label_code, tokenizer
 
