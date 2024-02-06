@@ -43,7 +43,10 @@ class ModelLoader():
         
         elif 'ncbi_disease' in dataset_name:
             dataset = dataset.remove_columns(['tokens', 'id', 'token_labels'])
-
+            
+        elif 'n2c2-2018' in self.dataset_name:
+            dataset = dataset.remove_columns(['tokens', 'ner_tags', 'token_labels'])
+            
         # Create a collator
         global data_collator
         data_collator = DataCollatorForTokenClassification(tokenizer=tokenizer)

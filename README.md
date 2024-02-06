@@ -39,6 +39,21 @@ This dataset contains the disease name and concept annotations of the NCBI disea
 
 The preprocessed data for LLM training can be found here https://huggingface.co/datasets/ncbi_disease.
 
+## 2.3 n2c2 2018 Track 2
+Details of the dataset can be found here https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7489085/. 
+>The data for this shared task consisted of 505 discharge summaries drawn from the MIMIC-III (Medical Information Mart for Intensive Care-III) clinical care database.33 These records were selected using a query that searched for an ADE in the International Classification of Diseases code description of each record. The identified records were manually screened to contain at least 1 ADE, and were annotated for the concept and relation types shown in Table 1. Each record in the dataset was annotated by 2 independent annotators while a third annotator resolved conflicts.
+
+```
+python src/data/generate_data.py \
+    --task ner \
+    --input_dir data/private/n2c2-2018/raw_ner/ \
+    --target_dir dataset/ \
+    --max_seq_len 512 \
+    --dev_split 0.1 \
+    --tokenizer UFNLP/gatortronS \
+    --ext txt \
+    --sep " "
+```
 # 3. Training setup
 ## 3.1 Environment
 Here I use Python version 3.9.2. All the dependencies are listed in requirements.txt.
@@ -48,8 +63,12 @@ You also need to install the repo as a package `pip install -e .`.
 An example to run the training code is
 ```
 python3 src/models/train_model.py --model_name 'UFNLP/gatortrons' --data_dir '/home/ec2-user/SageMaker/LLM-NER-clinical-text/data/public/MedMentions/preprocessed-data/' --batch_size 4 --num_train_epochs 5 --weight_decay 0.01 --new_model_dir "/home/ec2-user/SageMaker/LLM-NER-clinical-text/models/medmentions/gatortrons/" --path_umls_semtype '/home/ec2-user/SageMaker/LLM-NER-clinical-text/data/public/MedMentions/SemGroups_2018.txt'
-
 ```
+
+# 4. Results
+## MedMentions + NCBI-disease:
+The fine-tuned models and brief results can be found at my huggingface page https://huggingface.co/longluu.
+You can also look at the notebooks folder for training and test results.
 
 Project Organization
 ------------
@@ -86,8 +105,6 @@ Project Organization
     │   ├── data           <- Scripts to download or generate data
     │   │   └── make_dataset.py
     │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
     │   │
     │   ├── models         <- Scripts to train models and then use trained models to make
     │   │   │                 predictions
