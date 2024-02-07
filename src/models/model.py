@@ -1,7 +1,7 @@
 from transformers import AutoModelForTokenClassification, AutoConfig, AutoTokenizer, DataCollatorForTokenClassification
 import torch
 import numpy as np
-import evaluate
+from seqeval.metrics import f1_score, precision_score, recall_score
 from src.data.data_loader import *
 from torch.nn.functional import cross_entropy
 from typing import List
@@ -44,7 +44,7 @@ class ModelLoader():
         elif 'ncbi_disease' in dataset_name:
             dataset = dataset.remove_columns(['tokens', 'id', 'token_labels'])
             
-        elif 'n2c2-2018' in self.dataset_name:
+        elif 'n2c2-2018' in dataset_name:
             dataset = dataset.remove_columns(['tokens', 'ner_tags', 'token_labels'])
             
         # Create a collator
@@ -55,20 +55,22 @@ class ModelLoader():
         prediction_results = dataset['test'].map(self.forward_pass_with_label, batched=True, batch_size=1)        
         
         # Compute the metrics
-        clf_metrics = evaluate.combine(metric_names)
-        
-        for (prediction, label) in zip(prediction_results['predicted_label'], prediction_results['labels']):
-            # Convert to numpy array
-            label = np.array(label)
-            prediction = np.array(prediction)
+        pred_list = []
+        label_list = []
+        for predictions, labels in zip(prediction_results['predicted_label'], prediction_results['labels']):
+            example_labels, example_preds = [], []
+            for pred, label in zip(predictions, labels):
+                if label != -100:
+                    example_preds.append(classmap.int2str(int(pred)))
+                    example_labels.append(classmap.int2str(int(label)))
 
-            # Remove the special tokens
-            ind_not_special = np.where(label != -100)[0]
-
-            # Add to batch for computing error
-            clf_metrics.add_batch(predictions=prediction[ind_not_special], references=label[ind_not_special])
+            label_list.append(example_labels)
+            pred_list.append(example_preds)
             
-        return clf_metrics.compute(average='macro')
+        return {'f1': f1_score(pred_list, label_list), \
+                'precision': precision_score(pred_list, label_list), \
+                'recall': recall_score(pred_list, label_list)}, \
+                prediction_results, classmap
         
         
     def forward_pass_with_label(self, batch):

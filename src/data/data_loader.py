@@ -61,7 +61,7 @@ class DatasetLoader():
             dataset = dataset.rename_column("ner_tags", "token_labels")
             
             # Set the mapping of labels
-            classmap = ClassLabel(num_classes=3, names=['none', 'disease', 'disease_continued'])
+            classmap = ClassLabel(num_classes=3, names=['O', 'B-disease', 'I-disease'])
             umls_label_code = None
             
         elif 'n2c2-2018' in self.dataset_name:
